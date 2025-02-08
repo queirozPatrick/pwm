@@ -1,85 +1,88 @@
-#include <stdio.h>
 #include "pico/stdlib.h"
+#include "pico/time.h"
+#include "hardware/irq.h"
 #include "hardware/pwm.h"
 
-#define SERVO_PIN 22       // GPIO 22 para controle do servomotor
-#define LED_R_PIN 12       // GPIO 12 para o LED vermelho
-#define PWM_FREQ 50        // Frequência de 50Hz (período de 20ms)
+#define PINO_SERVO 22
+#define PWM_CICLO 24999  // 20ms (50Hz) para servos
+#define DIVISOR_CLK 100  // Divisor de clock para obter o período correto
 
-// Função para definir o ciclo ativo do PWM em microssegundos
-void set_servo_position(uint slice, uint channel, uint pulse_width_us) {
-    // Calcula o valor de wrap com base na frequência de PWM
-    uint32_t wrap = 125000000 / PWM_FREQ; // 125MHz / 50Hz = 2.500.000
-    pwm_set_wrap(slice, wrap);
-
-    // Converte o tempo de pulso em microssegundos para o valor de contagem do PWM
-    uint32_t level = (pulse_width_us * wrap) / 20000; // 20000us = 20ms
-    pwm_set_chan_level(slice, channel, level);
+// Função para converter microssegundos em nível PWM
+uint32_t microssegundos_para_nivel(uint32_t us) {
+    return (uint32_t)(us * 1.25f); // 1µs ≈ 1.25 unidades
 }
 
-// Função para ajustar a intensidade do LED vermelho
-void set_led_red(uint8_t red) {
-    // Ajusta o ciclo de trabalho do LED vermelho
-    pwm_set_gpio_level(LED_R_PIN, red * 100); // Vermelho
+// Função de interrupção de wrap (não será usada neste projeto)
+void trataInterrupcao() {
+    static int angulo = 0;
+    static bool flag = true;
+    pwm_clear_irq(pwm_gpio_to_slice_num(PINO_SERVO));
+
+    if (flag) {
+        angulo++;
+        if (angulo > 180) {  
+            angulo = 180;
+            flag = false;
+        }
+    } else {
+        angulo--;
+        if (angulo < 0) {
+            angulo = 0;
+            flag = true;
+        }
+    }
+
+    // Mapeia o ângulo para o ciclo de trabalho (1ms a 2ms)
+    uint16_t largura_pulso = 1000 + (angulo * 1000 / 180);  // 1000us a 2000us
+    pwm_set_gpio_level(PINO_SERVO, largura_pulso);
+}
+
+// Função para inicializar o PWM
+void inicializa() {
+    gpio_set_function(PINO_SERVO, GPIO_FUNC_PWM);
+    uint slice_num = pwm_gpio_to_slice_num(PINO_SERVO);
+    pwm_config config = pwm_get_default_config();
+    pwm_config_set_clkdiv(&config, DIVISOR_CLK); // Divisor de clock
+    pwm_config_set_wrap(&config, PWM_CICLO);      // Wrap
+    pwm_init(slice_num, &config, true);
 }
 
 int main() {
-    stdio_init_all(); // Inicializa o sistema padrão de I/O
+    uint slice_num = pwm_gpio_to_slice_num(PINO_SERVO);
 
-    // Configura o pino do servomotor como PWM
-    gpio_set_function(SERVO_PIN, GPIO_FUNC_PWM);
-    uint servo_slice = pwm_gpio_to_slice_num(SERVO_PIN);
-    uint servo_channel = pwm_gpio_to_channel(SERVO_PIN);
+    // Inicializa o PWM
+    inicializa();
 
-    // Configura o pino do LED vermelho como PWM
-    gpio_set_function(LED_R_PIN, GPIO_FUNC_PWM);
-    uint slice_r = pwm_gpio_to_slice_num(LED_R_PIN);
+    // Desabilita a interrupção para controlar o servo manualmente
+    pwm_set_irq_enabled(slice_num, false);
 
-    // Configura o divisor de clock para obter a frequência desejada
-    pwm_set_clkdiv(servo_slice, 100.0); // Divisor de clock para 1.25MHz (125MHz / 100)
-    pwm_set_clkdiv(slice_r, 100.0);
+    // Move o servo para 2400µs (2.4ms) - 180 graus
+    pwm_set_gpio_level(PINO_SERVO, microssegundos_para_nivel(2400));
+    sleep_ms(5000);
 
-    // Habilita o PWM nos slices correspondentes
-    pwm_set_enabled(servo_slice, true);
-    pwm_set_enabled(slice_r, true);
+    // Move o servo para 1470µs (1.47ms) - 90 graus
+    pwm_set_gpio_level(PINO_SERVO, microssegundos_para_nivel(1470));
+    sleep_ms(5000);
 
-    // Define o ciclo ativo para 2400µs (180 graus)
-    set_servo_position(servo_slice, servo_channel, 2400);
-    set_led_red(255); // LED vermelho no máximo (180 graus)
-    sleep_ms(5000); // Aguarda 5 segundos
+    // Move o servo para 500µs (0.5ms) - 0 graus
+    pwm_set_gpio_level(PINO_SERVO, microssegundos_para_nivel(500));
+    sleep_ms(5000);
 
-    // Define o ciclo ativo para 1470µs (90 graus)
-    set_servo_position(servo_slice, servo_channel, 1470);
-    set_led_red(127); // LED vermelho na metade da intensidade (90 graus)
-    sleep_ms(5000); // Aguarda 5 segundos
+    // Transição suave de 0° a 180° com incremento de ±5µs e atraso de 10ms
+    uint32_t nivel_inicial = microssegundos_para_nivel(500);  // 625
+    uint32_t nivel_final = microssegundos_para_nivel(2400);   // 3000
 
-    // Define o ciclo ativo para 500µs (0 graus)
-    set_servo_position(servo_slice, servo_channel, 500);
-    set_led_red(0); // LED vermelho desligado (0 graus)
-    sleep_ms(5000); // Aguarda 5 segundos
-
-    // Movimentação periódica do braço do servomotor entre 0 e 180 graus
-    while (true) {
-        // Movimentação de 0 a 180 graus
-        for (uint pulse_width_us = 500; pulse_width_us <= 2400; pulse_width_us += 5) {
-            set_servo_position(servo_slice, servo_channel, pulse_width_us);
-
-            // Ajusta a intensidade do LED vermelho conforme o ângulo do servomotor
-            uint8_t red = (pulse_width_us - 500) * 255 / 1900; // Mapeia 500-2400µs para 0-255
-            set_led_red(red);
-
-            sleep_ms(10); // Atraso de 10ms para movimentação suave
+    while (1) {
+        // Movimento de 0° a 180°
+        for (uint32_t i = nivel_inicial; i <= nivel_final; i += 5) {
+            pwm_set_gpio_level(PINO_SERVO, i);
+            sleep_ms(10);  // Atraso de 10ms para suavidade
         }
 
-        // Movimentação de 180 a 0 graus
-        for (uint pulse_width_us = 2400; pulse_width_us >= 500; pulse_width_us -= 5) {
-            set_servo_position(servo_slice, servo_channel, pulse_width_us);
-
-            // Ajusta a intensidade do LED vermelho conforme o ângulo do servomotor
-            uint8_t red = (pulse_width_us - 500) * 255 / 1900; // Mapeia 500-2400µs para 0-255
-            set_led_red(red);
-
-            sleep_ms(10); // Atraso de 10ms para movimentação suave
+        // Movimento de 180° a 0°
+        for (uint32_t i = nivel_final; i >= nivel_inicial; i -= 5) {
+            pwm_set_gpio_level(PINO_SERVO, i);
+            sleep_ms(10);  // Atraso de 10ms para suavidade
         }
     }
 
