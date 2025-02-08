@@ -100,6 +100,7 @@ int main() {
     // Transição suave de 0° a 180° com incremento de ±5µs e atraso de 10ms
     uint32_t nivel_inicial = microssegundos_para_nivel(500);  // 625
     uint32_t nivel_final = microssegundos_para_nivel(2400);   // 3000
+    printf("Transição suave de 0° a 180°.\nLed Azul aumenta e diminui o brilho de acordo com o ângulo.\n");
 
     while (1) {
         // Movimento de 0° a 180°
