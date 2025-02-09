@@ -11,7 +11,7 @@
       "attrs": { "builder": "pico-sdk" }
     },
     { "type": "wokwi-servo", "id": "servo1", "top": -11.6, "left": 76.8, "attrs": {} },
-    { "type": "wokwi-led", "id": "led1", "top": 6, "left": -121, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "led1", "top": 6, "left": -121, "attrs": { "color": "blue" } },
     {
       "type": "wokwi-resistor",
       "id": "r1",
