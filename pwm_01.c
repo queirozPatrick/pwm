@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #define PINO_SERVO 22
-#define LED_RED 12
+#define LED_BLUE 12
 #define PWM_CICLO 24999 // 20ms (50Hz) para servos
 #define DIVISOR_CLK 100 // Divisor de clock para obter o período correto
 
@@ -55,7 +55,7 @@ void trataInterrupcao()
 
     // Atualiza o brilho do LED
     uint8_t brilho = mapeia_brilho_led(angulo);
-    pwm_set_gpio_level(LED_RED, brilho * PWM_CICLO / 255);
+    pwm_set_gpio_level(LED_BLUE, brilho * PWM_CICLO / 255);
 }
 
 // Função para inicializar o PWM do servo e do LED
@@ -70,8 +70,8 @@ void inicializa()
     pwm_init(slice_num_servo, &config_servo, true);
 
     // Configura o PWM do LED
-    gpio_set_function(LED_RED, GPIO_FUNC_PWM);
-    uint slice_num_led = pwm_gpio_to_slice_num(LED_RED);
+    gpio_set_function(LED_BLUE, GPIO_FUNC_PWM);
+    uint slice_num_led = pwm_gpio_to_slice_num(LED_BLUE);
     pwm_config config_led = pwm_get_default_config();
     pwm_config_set_clkdiv(&config_led, DIVISOR_CLK);
     pwm_config_set_wrap(&config_led, PWM_CICLO);
@@ -97,19 +97,19 @@ int main()
 
     // Move o servo para 2400us (2.4ms) - 180 graus
     pwm_set_gpio_level(PINO_SERVO, microssegundos_para_nivel(2400));
-    pwm_set_gpio_level(LED_RED, 255 * PWM_CICLO / 255); // LED no brilho máximo
+    pwm_set_gpio_level(LED_BLUE, 255 * PWM_CICLO / 255); // LED no brilho máximo
     printf("Servo em 180°, LED no brilho máximo.\n");
     sleep_ms(5000);
 
     // Move o servo para 1470us (1.47ms) - 90 graus
     pwm_set_gpio_level(PINO_SERVO, microssegundos_para_nivel(1470));
-    pwm_set_gpio_level(LED_RED, 127 * PWM_CICLO / 255); // LED na metade do brilho
+    pwm_set_gpio_level(LED_BLUE, 127 * PWM_CICLO / 255); // LED na metade do brilho
     printf("Servo em 90°, LED na metade do brilho.\n");
     sleep_ms(5000);
 
     // Move o servo para 500us (0.5ms) - 0 graus
     pwm_set_gpio_level(PINO_SERVO, microssegundos_para_nivel(500));
-    pwm_set_gpio_level(LED_RED, 0); // LED apagado
+    pwm_set_gpio_level(LED_BLUE, 0); // LED apagado
     printf("Servo em 0°, LED apagado.\n");
     sleep_ms(5000);
 
@@ -125,7 +125,7 @@ int main()
         {
             pwm_set_gpio_level(PINO_SERVO, i);
             uint8_t brilho = mapeia_brilho_led((i - nivel_inicial) * 180 / (nivel_final - nivel_inicial));
-            pwm_set_gpio_level(LED_RED, brilho * PWM_CICLO / 255);
+            pwm_set_gpio_level(LED_BLUE, brilho * PWM_CICLO / 255);
             sleep_ms(10); // Atraso de 10ms para suavidade
         }
 
@@ -134,7 +134,7 @@ int main()
         {
             pwm_set_gpio_level(PINO_SERVO, i);
             uint8_t brilho = mapeia_brilho_led((i - nivel_inicial) * 180 / (nivel_final - nivel_inicial));
-            pwm_set_gpio_level(LED_RED, brilho * PWM_CICLO / 255);
+            pwm_set_gpio_level(LED_BLUE, brilho * PWM_CICLO / 255);
             sleep_ms(10); // Atraso de 10ms para suavidade
         }
     }
