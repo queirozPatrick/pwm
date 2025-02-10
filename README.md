@@ -39,7 +39,7 @@ O objetivo desta atividade é projetar um sistema utilizando o módulo PWM do mi
 
 ## 🎥 Demonstração do Projeto
 - Simulação no Wokwi: [Clique aqui](https://wokwi.com/projects/422362142211338241)
-- Vídeo do projeto: _(A ser incluído)_
+- Vídeo do projeto: (A ser incluído)_
 
 ## 🛠️ Configuração e Execução do Código
 ### Requisitos
