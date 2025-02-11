@@ -38,8 +38,8 @@ O objetivo desta atividade é projetar um sistema utilizando o módulo PWM do mi
    - Quando o servo está em **180°**, o LED está **no brilho máximo**. ✅
 
 ## 🎥 Demonstração do Projeto
-- Simulação no Wokwi: [Clique aqui](https://wokwi.com/projects/422362142211338241)
-- Vídeo do projeto: (A ser incluído)_
+- Simulação no Wokwi: [Clique aqui - Wokwi](https://wokwi.com/projects/422362142211338241)
+- Vídeo do projeto: [Clique aqui - Youtube](https://youtu.be/znAfD4t6uJU)
 
 ## 🛠️ Configuração e Execução do Código
 ### Requisitos
